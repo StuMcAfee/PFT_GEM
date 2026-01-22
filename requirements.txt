@@ -1,0 +1,23 @@
+# PFT_GEM Requirements
+# ====================
+
+# Core dependencies (required)
+numpy>=1.20.0
+scipy>=1.7.0
+
+# NIfTI file support (recommended)
+nibabel>=4.0.0
+
+# Visualization (recommended)
+matplotlib>=3.5.0
+
+# Jupyter notebook support (optional)
+jupyter>=1.0.0
+ipykernel>=6.0.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# pytest-cov>=3.0.0
+# black>=22.0.0
+# flake8>=4.0.0
+# mypy>=0.950
