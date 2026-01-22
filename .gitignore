@@ -140,10 +140,13 @@ cython_debug/
 Thumbs.db
 
 # Project-specific
-data/suit_template/*.nii
-data/suit_template/*.nii.gz
-!data/suit_template/README.md
-*.nii
-*.nii.gz
+# Keep SUIT template files (reference data)
+!data/suit_template/*.nii
+!data/suit_template/*.tsv
+# Ignore NIfTI files elsewhere (user-generated outputs)
+output/*.nii
+output/*.nii.gz
+results/*.nii
+results/*.nii.gz
 output/
 results/

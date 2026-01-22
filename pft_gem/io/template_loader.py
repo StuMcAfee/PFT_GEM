@@ -112,14 +112,27 @@ class SUITTemplateLoader:
     }
 
     # Expected file names in SUIT directory
+    # Multiple naming conventions supported for flexibility
     TEMPLATE_FILES = {
+        # Primary files (from cerebellar_atlases repository)
+        "template": "tpl-SUIT_T1w.nii",
+        "atlas": "atl-Anatom_space-SUIT_dseg.nii",
+        "atlas_prob": "atl-Anatom_space-SUIT_probseg.nii",
+        # Alternative names (from jdiedrichsen/suit repository)
+        "template_alt": "SUIT_T1.nii",
+        "template_suit": "SUIT.nii",
+        "mask": "SUIT_mask.nii",
+        "mask_prob": "SUIT_pcerebellum.nii",
+        "gray_matter": "gray_cereb.nii",
+        "white_matter": "white_cereb.nii",
+        # Legacy naming convention
         "template_1mm": "SUIT_T1_1mm.nii",
-        "template_2mm": "SUIT_T1_2mm.nii",
         "mask_1mm": "SUIT_mask_1mm.nii",
-        "mask_2mm": "SUIT_mask_2mm.nii",
         "atlas_1mm": "SUIT_atlas_1mm.nii",
-        "atlas_2mm": "SUIT_atlas_2mm.nii",
     }
+
+    # Label file for atlas regions
+    LABEL_FILE = "atl-Anatom.tsv"
 
     def __init__(
         self,
@@ -137,23 +150,65 @@ class SUITTemplateLoader:
         self._template_data: Optional[TemplateData] = None
 
     def _get_file_path(self, file_key: str) -> Optional[Path]:
-        """Get path to a SUIT file if it exists."""
+        """Get path to a SUIT file if it exists.
+
+        Tries multiple naming conventions in order of preference.
+        """
         if self.suit_dir is None:
             return None
 
-        key = f"{file_key}_{self.resolution}"
-        if key in self.TEMPLATE_FILES:
-            path = self.suit_dir / self.TEMPLATE_FILES[key]
+        # Try direct key first (new naming convention)
+        if file_key in self.TEMPLATE_FILES:
+            path = self.suit_dir / self.TEMPLATE_FILES[file_key]
+            if path.exists():
+                return path
+            # Try with .gz extension
+            path_gz = self.suit_dir / (self.TEMPLATE_FILES[file_key] + ".gz")
+            if path_gz.exists():
+                return path_gz
+
+        # Try key with resolution suffix (legacy naming)
+        key_res = f"{file_key}_{self.resolution}"
+        if key_res in self.TEMPLATE_FILES:
+            path = self.suit_dir / self.TEMPLATE_FILES[key_res]
+            if path.exists():
+                return path
+            path_gz = self.suit_dir / (self.TEMPLATE_FILES[key_res] + ".gz")
+            if path_gz.exists():
+                return path_gz
+
+        # Try alternative naming (_alt suffix)
+        key_alt = f"{file_key}_alt"
+        if key_alt in self.TEMPLATE_FILES:
+            path = self.suit_dir / self.TEMPLATE_FILES[key_alt]
             if path.exists():
                 return path
 
-        # Try with .gz extension
-        key_gz = key + ".gz"
-        path_gz = self.suit_dir / (self.TEMPLATE_FILES.get(key, "") + ".gz")
-        if path_gz.exists():
-            return path_gz
-
         return None
+
+    def _load_labels_from_tsv(self) -> Dict[int, str]:
+        """Load atlas labels from TSV file if available."""
+        if self.suit_dir is None:
+            return self.SUIT_LABELS.copy()
+
+        tsv_path = self.suit_dir / self.LABEL_FILE
+        if not tsv_path.exists():
+            return self.SUIT_LABELS.copy()
+
+        labels = {0: "Background"}
+        try:
+            with open(tsv_path, 'r') as f:
+                next(f)  # Skip header
+                for line in f:
+                    parts = line.strip().split('\t')
+                    if len(parts) >= 2:
+                        idx = int(parts[0])
+                        name = parts[1]
+                        labels[idx] = name
+        except (ValueError, IOError):
+            return self.SUIT_LABELS.copy()
+
+        return labels
 
     def is_available(self) -> bool:
         """Check if SUIT template data is available."""
@@ -173,7 +228,9 @@ class SUITTemplateLoader:
         if self._template_data is not None:
             return self._template_data
 
-        data = TemplateData(labels=self.SUIT_LABELS.copy())
+        # Load labels from TSV if available, otherwise use defaults
+        labels = self._load_labels_from_tsv()
+        data = TemplateData(labels=labels)
 
         # Try to load template
         template_path = self._get_file_path("template")
