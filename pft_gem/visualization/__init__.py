@@ -8,6 +8,7 @@ from .plotting import (
     plot_slice_comparison,
     plot_vector_field,
     plot_jacobian,
+    plot_tumor_displacement_profile,
     create_animation,
     VisualizationConfig,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "plot_slice_comparison",
     "plot_vector_field",
     "plot_jacobian",
+    "plot_tumor_displacement_profile",
     "create_animation",
     "VisualizationConfig",
 ]
