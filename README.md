@@ -302,9 +302,8 @@ PFT_GEM is recommended for:
 - Educational purposes
 
 PFT_FEM is recommended for:
-- High-fidelity surgical planning
+- High-fidelity MRI data augmentation
 - Complex material behavior
-- Validation studies
 
 ## SUIT Template
 
