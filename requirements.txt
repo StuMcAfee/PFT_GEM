@@ -8,6 +8,12 @@ scipy>=1.7.0
 # NIfTI file support (recommended)
 nibabel>=4.0.0
 
+# ANTsPy for spatial transforms (recommended)
+# Note: ANTsPy installation can be complex on some systems
+# Install via: pip install antspyx
+# Or: conda install -c aramislab antspyx
+antspyx>=0.3.0
+
 # Visualization (recommended)
 matplotlib>=3.5.0
 
