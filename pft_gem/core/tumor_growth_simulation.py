@@ -175,14 +175,32 @@ class TumorGrowthSimulator:
         dti_fa: Optional[np.ndarray] = None
     ):
         self.template = template_image
-        self.boundary_mask = boundary_mask.astype(bool)
         self.voxel_size = voxel_size
         self.affine = affine
         self.shape = template_image.shape
 
-        # Optional tissue-specific data
+        # Resample boundary mask if shape doesn't match template
+        if boundary_mask.shape != self.shape:
+            boundary_mask = self._resample_to_template(boundary_mask, order=0)
+        self.boundary_mask = boundary_mask.astype(bool)
+
+        # Resample optional tissue-specific data if needed
+        if tissue_mask is not None and tissue_mask.shape != self.shape:
+            tissue_mask = self._resample_to_template(tissue_mask, order=0)
         self.tissue_mask = tissue_mask
+
+        if dti_v1 is not None and dti_v1.shape[:3] != self.shape:
+            # Resample each component of the vector field
+            dti_v1_resampled = np.zeros((*self.shape, 3))
+            for i in range(3):
+                dti_v1_resampled[..., i] = self._resample_to_template(dti_v1[..., i], order=1)
+            # Renormalize
+            mag = np.linalg.norm(dti_v1_resampled, axis=-1, keepdims=True)
+            dti_v1 = np.where(mag > 1e-10, dti_v1_resampled / mag, dti_v1_resampled)
         self.dti_v1 = dti_v1
+
+        if dti_fa is not None and dti_fa.shape != self.shape:
+            dti_fa = self._resample_to_template(dti_fa, order=1)
         self.dti_fa = dti_fa
 
         # Compute boundary distance field (distance to nearest boundary point)
@@ -191,6 +209,13 @@ class TumorGrowthSimulator:
         # ANTsPy images (created on demand)
         self._ants_template = None
         self._ants_reference = None
+
+    def _resample_to_template(self, data: np.ndarray, order: int = 1) -> np.ndarray:
+        """Resample data array to match template shape using zoom."""
+        if data.shape == self.shape:
+            return data
+        zoom_factors = [t / d for t, d in zip(self.shape, data.shape)]
+        return ndimage.zoom(data, zoom_factors, order=order)
 
     def _compute_boundary_distance(self) -> np.ndarray:
         """Compute distance transform from boundary."""
