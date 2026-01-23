@@ -11,6 +11,7 @@ Key Features:
 - Integration with SUIT (Spatially Unbiased Infratentorial Template)
 - Biophysical constraints from diffusion MRI data
 - NIfTI format support for neuroimaging compatibility
+- ANTsPy-compatible spatial transforms for image warping
 """
 
 __version__ = "0.1.0"
@@ -19,10 +20,22 @@ __author__ = "PFT_GEM Development Team"
 from .core.geometric_model import GeometricExpansionModel
 from .core.displacement import DisplacementField
 from .core.constraints import BiophysicalConstraints
+from .core.tumor_growth_simulation import (
+    TumorGrowthSimulator,
+    TumorGrowthParams,
+    TissueProperties,
+    SimulationOutput,
+    simulate_tumor_growth,
+)
 
 __all__ = [
     "GeometricExpansionModel",
     "DisplacementField",
     "BiophysicalConstraints",
+    "TumorGrowthSimulator",
+    "TumorGrowthParams",
+    "TissueProperties",
+    "SimulationOutput",
+    "simulate_tumor_growth",
     "__version__",
 ]
